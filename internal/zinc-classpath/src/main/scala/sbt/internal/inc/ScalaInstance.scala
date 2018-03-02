@@ -66,6 +66,11 @@ final class ScalaInstance(
     }
   }
 
+  /** ClassLoader with just scala-library.jar. */
+  lazy val libraryLoader: ClassLoader = {
+    classpath.ClasspathUtilities.toLibraryLoader(this)
+  }
+
   /** Get the string representation of all the available jars. */
   private def jarStrings: String = {
     val other = otherJars.mkString(", ")
@@ -75,6 +80,7 @@ final class ScalaInstance(
   override def toString: String =
     s"Scala instance { version label $version, actual version $actualVersion, $jarStrings }"
 }
+
 object ScalaInstance {
 
   /** Name of scala organisation to be used for artifact resolution. */

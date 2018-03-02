@@ -63,8 +63,44 @@ object ClasspathUtilities {
   final val AppClassPath = "app.class.path"
   final val BootClassPath = "boot.class.path"
 
-  def createClasspathResources(classpath: Seq[File], instance: ScalaInstance): Map[String, String] =
-    createClasspathResources(classpath, instance.allJars)
+  private[sbt] def findLibrary(instance: ScalaInstance): File = {
+    instance match {
+      case i: inc.ScalaInstance => i.libraryJar
+      case _ =>
+        (instance.allJars find { x =>
+          x.getName.startsWith("scala-library")
+        }).getOrElse {
+          throw new InvalidScalaProvider(s"Couldn't find scala-library")
+        }
+    }
+  }
+
+  /** returns the cached library loader if it's inc.ScalaInstance. */
+  def getLibraryLoader(instance: ScalaInstance): ClassLoader = {
+    instance match {
+      case i: inc.ScalaInstance => i.libraryLoader
+      case _                    => toLibraryLoader(instance)
+    }
+  }
+
+  /**
+   * Include only the scala-library.jar, if any, into the boot classpath.
+   * 1. Supposedly using boot classpath here is for performance reason:
+   *    https://groups.google.com/d/msg/scala-internals/tT1pjH5GECE/dtgRj3w7ovIJ
+   * 2. Using instance.allJars causes compiler and scala-xml (different version from cp!) to get pulled in.
+   *    https://github.com/sbt/sbt/issues/3405
+   */
+  private[sbt] def toLibraryLoader(instance: ScalaInstance): ClassLoader = {
+    val libraryJar = findLibrary(instance)
+    val cp = Vector(libraryJar)
+    toLoader(cp, rootLoader, createClasspathResources(cp, instance))
+  }
+
+  def createClasspathResources(classpath: Seq[File],
+                               instance: ScalaInstance): Map[String, String] = {
+    val libraryJar = findLibrary(instance)
+    createClasspathResources(classpath, Array(libraryJar))
+  }
 
   def createClasspathResources(appPaths: Seq[File], bootPaths: Seq[File]): Map[String, String] = {
     def make(name: String, paths: Seq[File]) = name -> Path.makeString(paths)
@@ -74,11 +110,16 @@ object ClasspathUtilities {
   private[sbt] def filterByClasspath(classpath: Seq[File], loader: ClassLoader): ClassLoader =
     new ClasspathFilter(loader, xsbtiLoader, classpath.toSet)
 
+  /**
+   * Creates a ClassLoader that contains the classpath and the scala-library from
+   * the given instance.
+   */
   def makeLoader(classpath: Seq[File], instance: ScalaInstance): ClassLoader =
-    filterByClasspath(classpath, makeLoader(classpath, instance.loader, instance))
+    filterByClasspath(classpath, makeLoader(classpath, getLibraryLoader(instance), instance))
 
   def makeLoader(classpath: Seq[File], instance: ScalaInstance, nativeTemp: File): ClassLoader =
-    filterByClasspath(classpath, makeLoader(classpath, instance.loader, instance, nativeTemp))
+    filterByClasspath(classpath,
+                      makeLoader(classpath, getLibraryLoader(instance), instance, nativeTemp))
 
   def makeLoader(classpath: Seq[File], parent: ClassLoader, instance: ScalaInstance): ClassLoader =
     toLoader(classpath, parent, createClasspathResources(classpath, instance))
