@@ -337,6 +337,7 @@ lazy val compilerInterface = (project in internalPath / "compiler-interface")
       import com.typesafe.tools.mima.core.ProblemFilters._
       Seq(
         exclude[ReversedMissingMethodProblem]("xsbti.compile.ExternalHooks#Lookup.hashClasspath"),
+        exclude[ReversedMissingMethodProblem]("xsbti.compile.ScalaInstance.loaderLibraryOnly"),
       )
     },
   )
@@ -466,6 +467,14 @@ lazy val zincClasspath = (project in internalPath / "zinc-classpath")
     relaxNon212,
     libraryDependencies ++= Seq(scalaCompiler.value, launcherInterface),
     mimaSettings,
+    mimaBinaryIssueFilters ++= {
+      import com.typesafe.tools.mima.core._
+      import com.typesafe.tools.mima.core.ProblemFilters._
+      Seq(
+        // Add another ctor to ScalaInstance
+        exclude[DirectMissingMethodProblem]("sbt.internal.inc.ScalaInstance.this"),
+      )
+    },
   )
   .configure(addSbtIO)
 
