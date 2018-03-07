@@ -34,10 +34,10 @@ public interface ScalaInstance {
 	/** A class loader providing access to the classes and resources in the library. */
 	ClassLoader loaderLibraryOnly();
 
-	/** @deprecated Only `jars` can be reliably provided for modularized Scala. */
+	/** Only `jars` can be reliably provided for modularized Scala. */
 	File libraryJar();
 
-	/** @deprecated Only `jars` can be reliably provided for modularized Scala. */
+	/** Only `jars` can be reliably provided for modularized Scala. */
 	File compilerJar();
 
 	/** @deprecated Only `jars` can be reliably provided for modularized Scala (since 0.13.0). */

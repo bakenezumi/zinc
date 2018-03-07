@@ -63,22 +63,9 @@ object ClasspathUtilities {
   final val AppClassPath = "app.class.path"
   final val BootClassPath = "boot.class.path"
 
-  private[sbt] def findLibrary(instance: ScalaInstance): File = {
-    instance match {
-      case i: inc.ScalaInstance => i.libraryJar
-      case _ =>
-        (instance.allJars find { x =>
-          x.getName.startsWith("scala-library")
-        }).getOrElse {
-          throw new InvalidScalaProvider(s"Couldn't find scala-library")
-        }
-    }
-  }
-
   def createClasspathResources(classpath: Seq[File],
                                instance: ScalaInstance): Map[String, String] = {
-    val libraryJar = findLibrary(instance)
-    createClasspathResources(classpath, Array(libraryJar))
+    createClasspathResources(classpath, Array(instance.libraryJar))
   }
 
   def createClasspathResources(appPaths: Seq[File], bootPaths: Seq[File]): Map[String, String] = {
