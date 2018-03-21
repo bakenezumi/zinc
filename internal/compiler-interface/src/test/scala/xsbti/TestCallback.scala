@@ -56,9 +56,9 @@ class TestCallback extends AnalysisCallback {
     ()
   }
 
-  def usedName(className: String, name: String, scopes: util.EnumSet[UseScope]): Unit =
+  def usedName(className: String, name: String, scopes: util.EnumSet[UseScope]): Unit = {
     usedNamesAndScopes(className) += TestUsedName(name, scopes)
-
+  }
   def api(source: File, api: ClassLike): Unit = {
     apis(source) += api
     ()
