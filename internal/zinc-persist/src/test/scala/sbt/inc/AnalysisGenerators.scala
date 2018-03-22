@@ -186,6 +186,16 @@ trait AnalysisGenerators {
       allNames <- listOfN(classNames.length, containerOf[Set, UsedName](genUsedName()))
     } yield Relation.reconstruct(zipMap(classNames, allNames))
 
+  def genDefinedName(namesGen: Gen[String] = genScalaName): Gen[DefinedName] =
+    for {
+      name <- namesGen
+    } yield DefinedName(name, None)
+
+  def genDefinedNames(classNames: Seq[String]): Gen[Relation[String, DefinedName]] =
+    for {
+      allNames <- listOfN(classNames.length, containerOf[Set, DefinedName](genDefinedName()))
+    } yield Relation.reconstruct(zipMap(classNames, allNames))
+
   def genRelationsNameHashing: Gen[Relations] =
     for {
       numSrcs <- choose(0, maxSources)
@@ -212,6 +222,7 @@ trait AnalysisGenerators {
           DependencyByInheritance -> inheritance.external,
           LocalDependencyByInheritance -> localInheritance.external
         ))
+      definedNames <- genDefinedNames(classNames)
     } yield
       Relations.make(srcProd,
                      libraryDep,
@@ -220,7 +231,8 @@ trait AnalysisGenerators {
                      external,
                      classes,
                      names,
-                     productClassName)
+                     productClassName,
+                     definedNames)
 
   def genAnalysis: Gen[Analysis] =
     for {

@@ -9,6 +9,4 @@ package sbt.internal.inc
 
 import xsbti.Position
 
-case class DefinedName private (name: String, pos: Position)
-
-
+case class DefinedName private (name: String, pos: Option[Position])

@@ -280,14 +280,13 @@ private final class AnalysisCallback(
   def usedName(className: String, name: String, useScopes: util.EnumSet[UseScope]) =
     add(usedNames, className, UsedName(name, useScopes))
 
-
   def definedName(className: String, name: String, pos: Position) =
-    add(definedNames, className, DefinedName(name, pos))
+    add(definedNames, className, DefinedName(name, Some(pos)))
 
   override def enabled(): Boolean = options.enabled
 
   def get: Analysis =
-    addUsedNames(addCompilation(addProductsAndDeps(Analysis.empty)))
+    addDefinedNames(addUsedNames(addCompilation(addProductsAndDeps(Analysis.empty))))
 
   def getOrNil[A, B](m: collection.Map[A, Seq[B]], a: A): Seq[B] = m.get(a).toList.flatten
   def addCompilation(base: Analysis): Analysis =
@@ -296,6 +295,12 @@ private final class AnalysisCallback(
     case (a, (className, names)) =>
       (a /: names) {
         case (a, name) => a.copy(relations = a.relations.addUsedName(className, name))
+      }
+  }
+  def addDefinedNames(base: Analysis): Analysis = (base /: definedNames) {
+    case (a, (className, names)) =>
+      (a /: names) {
+        case (a, name) => a.copy(relations = a.relations.addDefinedName(className, name))
       }
   }
 

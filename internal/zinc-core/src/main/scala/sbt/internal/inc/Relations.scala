@@ -127,6 +127,8 @@ trait Relations {
 
   private[inc] def addUsedName(className: String, name: UsedName): Relations
 
+  private[inc] def addDefinedName(className: String, name: DefinedName): Relations
+
   /** Concatenates the two relations. Acts naively, i.e., doesn't internalize external deps on added files. */
   def ++(o: Relations): Relations
 
@@ -253,6 +255,11 @@ trait Relations {
    * Relation between source files and _unqualified_ term and type names used in given source file.
    */
   private[inc] def names: Relation[String, UsedName]
+
+  /**
+   * Relation between source files and _unqualified_ term and type names defined in given source file.
+   */
+  private[inc] def definedNames: Relation[String, DefinedName]
 }
 
 object Relations {
@@ -291,7 +298,8 @@ object Relations {
     externalDependencies = ExternalDependencies.empty,
     classes = Relation.empty,
     names = Relation.empty,
-    productClassName = Relation.empty
+    productClassName = Relation.empty,
+    definedNames = Relation.empty
   )
 
   private[inc] def make(srcProd: Relation[File, File],
@@ -301,7 +309,8 @@ object Relations {
                         externalDependencies: ExternalDependencies,
                         classes: Relation[File, String],
                         names: Relation[String, UsedName],
-                        productClassName: Relation[String, String]): Relations =
+                        productClassName: Relation[String, String],
+                        definedName: Relation[String, DefinedName]): Relations =
     new MRelationsNameHashing(
       srcProd,
       libraryDep,
@@ -310,7 +319,8 @@ object Relations {
       externalDependencies = externalDependencies,
       classes,
       names,
-      productClassName
+      productClassName,
+      definedName
     )
   private[inc] def makeClassDependencies(internal: Relation[String, String],
                                          external: Relation[String, String]): ClassDependencies =
@@ -530,7 +540,8 @@ private class MRelationsNameHashing(
     val externalDependencies: ExternalDependencies,
     classes: Relation[File, String],
     val names: Relation[String, UsedName],
-    productClassName: Relation[String, String]
+    productClassName: Relation[String, String],
+    val definedNames: Relation[String, DefinedName]
 ) extends MRelationsCommon(srcProd, libraryDep, libraryClassName, classes, productClassName) {
 
   def internalClassDep: Relation[String, String] = memberRef.internal
@@ -545,7 +556,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies,
       classes = classes,
       names = names,
-      productClassName = productClassName
+      productClassName = productClassName,
+      definedNames = definedNames
     )
 
   private[inc] def addClasses(src: File, classes: Iterable[(String, String)]): Relations =
@@ -557,7 +569,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies,
       this.classes ++ classes.map(c => (src, c._1)),
       names = names,
-      productClassName = this.productClassName ++ classes
+      productClassName = this.productClassName ++ classes,
+      definedNames = definedNames
     )
 
   def addInternalSrcDeps(src: File, deps: Iterable[InternalDependency]) =
@@ -569,7 +582,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies,
       classes,
       names,
-      productClassName = productClassName
+      productClassName = productClassName,
+      definedNames
     )
 
   def addExternalDeps(src: File, deps: Iterable[ExternalDependency]) =
@@ -581,7 +595,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies ++ deps,
       classes,
       names,
-      productClassName = productClassName
+      productClassName = productClassName,
+      definedNames
     )
 
   def addLibraryDeps(src: File, deps: Iterable[(File, String, Stamp)]) =
@@ -595,7 +610,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies,
       classes,
       names,
-      productClassName = productClassName
+      productClassName = productClassName,
+      definedNames
     )
 
   override private[inc] def addUsedName(className: String, name: UsedName): Relations =
@@ -607,7 +623,21 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies,
       classes,
       names = names + (className, name),
-      productClassName = productClassName
+      productClassName = productClassName,
+      definedNames = definedNames
+    )
+
+  override private[inc] def addDefinedName(className: String, name: DefinedName): Relations =
+    new MRelationsNameHashing(
+      srcProd,
+      libraryDep,
+      libraryClassName,
+      internalDependencies = internalDependencies,
+      externalDependencies = externalDependencies,
+      classes,
+      names = names,
+      productClassName = productClassName,
+      definedNames = definedNames + (className, name)
     )
 
   override def inheritance: ClassDependencies =
@@ -635,7 +665,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies ++ o.externalDependencies,
       classes ++ o.classes,
       names = names ++ o.names,
-      productClassName = productClassName ++ o.productClassName
+      productClassName = productClassName ++ o.productClassName,
+      definedNames = o.definedNames
     )
   }
   def --(sources: Iterable[File]) = {
@@ -648,7 +679,8 @@ private class MRelationsNameHashing(
       externalDependencies = externalDependencies -- classesInSources,
       classes -- sources,
       names = names -- classesInSources,
-      productClassName = productClassName -- classesInSources
+      productClassName = productClassName -- classesInSources,
+      definedNames = definedNames -- classesInSources
     )
   }
 
@@ -679,6 +711,7 @@ private class MRelationsNameHashing(
     |  class names: ${relation_s(classes)}
     |  used names: ${relation_s(names)}
     |  product class names: ${relation_s(productClassName)}
+    |  defined names: ${relation_s(definedNames)}
     """.trim.stripMargin
   }
 }

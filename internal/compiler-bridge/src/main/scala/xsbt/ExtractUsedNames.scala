@@ -202,6 +202,9 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         if (!ignoredSymbol(symbol) && !isEmptyName(symbol.name)) {
           val mn = mangledName(symbol)
           namePositions.add((tree.pos, mn))
+          println(
+            s"addSymbolPosition $mn (${symbol.fullName}) \n    ${tree.getClass} ${tree.pos}. This is typed to ${tree.tpe}")
+
           ()
         }
     }

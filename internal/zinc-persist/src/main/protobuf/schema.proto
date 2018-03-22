@@ -392,6 +392,11 @@ message UsedName {
     repeated UseScope scopes = 2;
 }
 
+message DefinedName {
+    string name = 1;
+    Position position = 2;
+}
+
 /** Defines a container for the values of maps. */
 message Values {
     repeated string values = 1;
@@ -399,6 +404,10 @@ message Values {
 
 message UsedNames {
     repeated UsedName usedNames = 1;
+}
+
+message DefinedNames {
+    repeated DefinedName definedNames = 1;
 }
 
 message ClassDependencies {
@@ -424,6 +433,9 @@ message Relations {
     ClassDependencies memberRef = 7;
     ClassDependencies inheritance = 8;
     ClassDependencies localInheritance = 9;
+
+    /** Defines relation between names and their defined names. */
+    map<string, DefinedNames> definedNames = 10;
 }
 
 message Analysis {

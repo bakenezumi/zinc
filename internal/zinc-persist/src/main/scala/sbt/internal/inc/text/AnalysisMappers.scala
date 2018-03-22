@@ -9,7 +9,7 @@ package sbt.internal.inc.text
 
 import java.io.File
 
-import sbt.internal.inc.UsedName
+import sbt.internal.inc.{ DefinedName, UsedName }
 import xsbti.UseScope
 import xsbti.compile.analysis.Stamp
 
@@ -30,7 +30,14 @@ object Mapper {
 
     Mapper(deserialize, serialize)
   }
+  val forDefinedName: Mapper[DefinedName] = {
+    def serialize(definedName: DefinedName): String =
+      definedName.name
 
+    def deserialize(s: String) = DefinedName(s, None)
+
+    Mapper(deserialize, serialize)
+  }
   implicit class MapperOpts[V](mapper: Mapper[V]) {
     def map[T](map: V => T, unmap: T => V) =
       Mapper[T](mapper.read.andThen(map), unmap.andThen(mapper.write))

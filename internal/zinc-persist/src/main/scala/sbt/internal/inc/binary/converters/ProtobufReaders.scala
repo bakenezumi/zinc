@@ -18,6 +18,7 @@ import xsbti.compile.analysis.{ Compilation, ReadMapper, SourceInfo, Stamp }
 import sbt.internal.inc.binary.converters.ProtobufDefaults.Feedback.StringToException
 import sbt.internal.inc.binary.converters.ProtobufDefaults.Feedback.{ Readers => ReadersFeedback }
 import sbt.internal.inc.binary.converters.ProtobufDefaults.{ Classes, ReadersConstants }
+import sbt.internal.inc.schema.DefinedNames
 import sbt.internal.util.Relation
 import xsbti.api._
 
@@ -569,6 +570,19 @@ final class ProtobufReaders(mapper: ReadMapper) {
       Relation.reconstruct(forwardMap)
     }
 
+    def fromDefinedName(definedName: schema.DefinedName): DefinedName = {
+      val name = definedName.name
+      val position = definedName.position.map(fromPosition)
+      DefinedName(name, position)
+    }
+
+    def fromDefinedNamesMap(
+        map: Map[String, schema.DefinedNames]): Relation[String, DefinedName] = {
+      val forwardMap = map.mapValues((values: DefinedNames) =>
+        values.definedNames.iterator.map(fromDefinedName).toSet)
+      Relation.reconstruct(forwardMap)
+    }
+
     def expected(msg: String) = ReadersFeedback.expected(msg, Classes.Relations)
 
     val srcProd = fromMap(relations.srcProd, stringToFile, stringToFile)
@@ -581,6 +595,7 @@ final class ProtobufReaders(mapper: ReadMapper) {
     val classes = fromMap(relations.classes, stringToFile, stringId)
     val productClassName = fromMap(relations.productClassName, stringId, stringId)
     val names = fromUsedNamesMap(relations.names)
+    val definedNames = fromDefinedNamesMap(relations.definedNames)
     val internal = InternalDependencies(
       Map(
         DependencyContext.DependencyByMemberRef -> memberRef.internal,
@@ -603,7 +618,8 @@ final class ProtobufReaders(mapper: ReadMapper) {
       external,
       classes,
       names,
-      productClassName
+      productClassName,
+      definedNames
     )
   }
 

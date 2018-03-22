@@ -9,7 +9,7 @@ package sbt.internal.inc.text
 
 import java.io.{ BufferedReader, File, Writer }
 
-import sbt.internal.inc.{ ExternalDependencies, InternalDependencies, Relations, UsedName }
+import sbt.internal.inc._
 import sbt.internal.util.Relation
 import xsbti.api.DependencyContext._
 
@@ -42,7 +42,8 @@ trait RelationsTextFormat extends FormatCommons {
       stringsDescriptor("local external inheritance dependencies", _.localInheritance.external),
       Descriptor("class names", _.classes, sourcesMapper, Mapper.forString),
       Descriptor("used names", _.names, Mapper.forString, Mapper.forUsedName),
-      stringsDescriptor("product class names", _.productClassName)
+      stringsDescriptor("product class names", _.productClassName),
+      Descriptor("defined names", _.definedNames, Mapper.forString, Mapper.forDefinedName)
     )
   }
 
@@ -118,13 +119,14 @@ trait RelationsTextFormat extends FormatCommons {
    */
   private def construct(relations: List[Relation[_, _]]) =
     relations match {
-      case p :: bin :: lcn :: mri :: mre :: ii :: ie :: lii :: lie :: cn :: un :: bcn :: Nil =>
+      case p :: bin :: lcn :: mri :: mre :: ii :: ie :: lii :: lie :: cn :: un :: bcn :: dn :: Nil =>
         val srcProd = p.asInstanceOf[Relation[File, File]]
         val binaryDep = bin.asInstanceOf[Relation[File, File]]
         val libraryClassName = lcn.asInstanceOf[Relation[File, String]]
         val classes = cn.asInstanceOf[Relation[File, String]]
         val names = un.asInstanceOf[Relation[String, UsedName]]
         val binaryClassName = bcn.asInstanceOf[Relation[String, String]]
+        val defineNames = dn.asInstanceOf[Relation[String, DefinedName]]
 
         val internal = InternalDependencies(
           Map(
@@ -145,7 +147,8 @@ trait RelationsTextFormat extends FormatCommons {
                        external,
                        classes,
                        names,
-                       binaryClassName)
+                       binaryClassName,
+                       defineNames)
       case _ =>
         throw new java.io.IOException(
           s"Expected to read ${allRelations.length} relations but read ${relations.length}.")
