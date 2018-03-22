@@ -75,22 +75,21 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         val otherScopes = scopedNames.get(name)
         if (otherScopes != null) {
           builder.append(" in [")
-          otherScopes.foreach(scope => builder.append(scope.name()).append(", "))
+          otherScopes.foreach { scope =>
+            builder.append(scope.name()).append(", ")
+            ()
+          }
           builder.append("]")
         }
         builder.append(", ")
+        ()
       }
       builder.append("\n defined: ")
       defaultNamePositions.foreach {
         case (pos, name) =>
           builder.append(name.decoded.trim)
-          val otherScopes = scopedNames.get(name)
-          if (otherScopes != null) {
-            builder.append(" in [")
-            otherScopes.foreach(scope => builder.append(scope.name()).append(", "))
-            builder.append("]")
-          }
           builder.append(", ")
+          ()
       }
       builder.toString()
     }
@@ -162,6 +161,11 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         }
         callback.usedName(className, useName, useScopes)
       }
+      usedNames.defaultNamePositions.foreach {
+        case (pos, rawUsedName) =>
+          val useName = rawUsedName.decoded.trim
+          callback.definedName(className, useName, DelegatingReporter.convert(pos))
+      }
     }
   }
 
@@ -198,8 +202,6 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         if (!ignoredSymbol(symbol) && !isEmptyName(symbol.name)) {
           val mn = mangledName(symbol)
           namePositions.add((tree.pos, mn))
-          println(
-            s"addSymbolPosition $mn (${symbol.fullName}) \n    ${tree.getClass} ${tree.pos}. This is typed to ${tree.tpe}")
           ()
         }
     }
@@ -275,7 +277,6 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
     private def handleClassicTreeNode(tree: Tree): Unit = tree match {
       // Register names from pattern match target type in PatMatTarget scope
       case ValDef(mods, _, tpt, _) if mods.isCase && mods.isSynthetic =>
-        addSymbolPosition(getNamePositionsOfEnclosingScope, tree.symbol, tree)
         updateCurrentOwner()
         PatMatDependencyTraverser.traverse(tpt.tpe)
       case _: ValOrDefDef | _: TypeDef if !tree.symbol.isConstructor =>

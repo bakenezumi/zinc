@@ -134,6 +134,15 @@ public interface AnalysisCallback {
     void usedName(String className, String name, EnumSet<UseScope> useScopes);
 
     /**
+     * Register the define of a <code>name</code> from a given source class name.
+     *
+     * @param className The source class name that defines <code>name</code>.
+     * @param name The source name defined in <code>className</code>.
+     * @param pos At a given source position.
+     */
+    void definedName(String className, String name, Position pos);
+
+    /**
      * Register a compilation problem.
      *
      * This error may have already been logged or not. Unreported problems may

@@ -138,6 +138,7 @@ private final class AnalysisCallback(
   private[this] val classPublicNameHashes = new HashMap[String, Array[NameHash]]
   private[this] val objectPublicNameHashes = new HashMap[String, Array[NameHash]]
   private[this] val usedNames = new HashMap[String, Set[UsedName]]
+  private[this] val definedNames = new HashMap[String, Set[DefinedName]]
   private[this] val unreporteds = new HashMap[File, ListBuffer[Problem]]
   private[this] val reporteds = new HashMap[File, ListBuffer[Problem]]
   private[this] val mainClasses = new HashMap[File, ListBuffer[String]]
@@ -278,6 +279,10 @@ private final class AnalysisCallback(
 
   def usedName(className: String, name: String, useScopes: util.EnumSet[UseScope]) =
     add(usedNames, className, UsedName(name, useScopes))
+
+
+  def definedName(className: String, name: String, pos: Position) =
+    add(definedNames, className, DefinedName(name, pos))
 
   override def enabled(): Boolean = options.enabled
 

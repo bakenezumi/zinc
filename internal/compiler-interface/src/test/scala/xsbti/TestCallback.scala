@@ -9,17 +9,22 @@ import scala.collection.mutable.ArrayBuffer
 
 class TestCallback extends AnalysisCallback {
   case class TestUsedName(name: String, scopes: util.EnumSet[UseScope])
+  case class TestDefinedName(name: String, pos: Position)
 
   val classDependencies = new ArrayBuffer[(String, String, DependencyContext)]
   val binaryDependencies = new ArrayBuffer[(File, String, String, DependencyContext)]
   val products = new ArrayBuffer[(File, File)]
   val usedNamesAndScopes =
     scala.collection.mutable.Map.empty[String, Set[TestUsedName]].withDefaultValue(Set.empty)
+  val definedNamesAndPositions =
+    scala.collection.mutable.Map.empty[String, Set[TestDefinedName]].withDefaultValue(Set.empty)
   val classNames =
     scala.collection.mutable.Map.empty[File, Set[(String, String)]].withDefaultValue(Set.empty)
   val apis: scala.collection.mutable.Map[File, Set[ClassLike]] = scala.collection.mutable.Map.empty
 
   def usedNames = usedNamesAndScopes.mapValues(_.map(_.name))
+
+  def definedNames = definedNamesAndPositions.mapValues(_.map(_.name))
 
   def startSource(source: File): Unit = {
     assert(!apis.contains(source),
@@ -59,6 +64,11 @@ class TestCallback extends AnalysisCallback {
   def usedName(className: String, name: String, scopes: util.EnumSet[UseScope]): Unit = {
     usedNamesAndScopes(className) += TestUsedName(name, scopes)
   }
+
+  def definedName(className: String, name: String, pos: Position): Unit = {
+    definedNamesAndPositions(className) += TestDefinedName(name, pos)
+  }
+
   def api(source: File, api: ClassLike): Unit = {
     apis(source) += api
     ()
