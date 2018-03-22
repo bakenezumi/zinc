@@ -69,7 +69,7 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
 
     // We have to leave with commas on ends
     override def toString(): String = {
-      val builder = new StringBuilder(": ")
+      val builder = new StringBuilder("\n used: ")
       defaultNames.foreach { name =>
         builder.append(name.decoded.trim)
         val otherScopes = scopedNames.get(name)
@@ -79,6 +79,18 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
           builder.append("]")
         }
         builder.append(", ")
+      }
+      builder.append("\n defined: ")
+      defaultNamePositions.foreach {
+        case (pos, name) =>
+          builder.append(name.decoded.trim)
+          val otherScopes = scopedNames.get(name)
+          if (otherScopes != null) {
+            builder.append(" in [")
+            otherScopes.foreach(scope => builder.append(scope.name()).append(", "))
+            builder.append("]")
+          }
+          builder.append(", ")
       }
       builder.toString()
     }
