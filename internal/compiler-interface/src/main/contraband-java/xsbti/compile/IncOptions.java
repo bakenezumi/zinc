@@ -64,9 +64,6 @@ public final class IncOptions implements java.io.Serializable {
     public static boolean defaultLogRecompileOnMacro() {
         return true;
     }
-    public static boolean defaultStoreNamePositions() {
-        return true;
-    }
     public static IncOptions create() {
         return new IncOptions();
     }
@@ -96,7 +93,7 @@ public final class IncOptions implements java.io.Serializable {
     /**
      * Controls context size (in lines) displayed when diffs are produced for textual API
      * representation.
-     *
+     * 
      * This option is used only when `apiDebug == true`.
      */
     private int apiDiffContextSize;
@@ -144,7 +141,7 @@ public final class IncOptions implements java.io.Serializable {
         apiDiffContextSize = xsbti.compile.IncOptions.defaultApiDiffContextSize();
         apiDumpDirectory = xsbti.compile.IncOptions.defaultApiDumpDirectory();
         classfileManagerType = xsbti.compile.IncOptions.defaultClassFileManagerType();
-        useCustomizedFileManager = xsbti.compile.IncOptions.defaultUseOptimizedSealed();
+        useCustomizedFileManager = xsbti.compile.IncOptions.defaultUseCustomizedFileManager();
         recompileOnMacroDef = xsbti.compile.IncOptions.defaultRecompileOnMacroDef();
         useOptimizedSealed = xsbti.compile.IncOptions.defaultUseOptimizedSealed();
         storeApis = xsbti.compile.IncOptions.defaultStoreApis();

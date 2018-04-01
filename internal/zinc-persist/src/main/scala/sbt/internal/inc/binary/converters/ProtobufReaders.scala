@@ -20,6 +20,11 @@ import sbt.internal.inc.binary.converters.ProtobufDefaults.Feedback.{ Readers =>
 import sbt.internal.inc.binary.converters.ProtobufDefaults.{ Classes, ReadersConstants }
 import sbt.internal.util.Relation
 import xsbti.api._
+import `scala`.meta.internal.semanticdb3.semanticdb3.{
+  Range => RangeProtobuf,
+  SymbolOccurrence => SymbolOccurrenceProtobuf
+}
+import xsbti.semanticdb3.{ Range, Role, SymbolOccurrence }
 
 final class ProtobufReaders(mapper: ReadMapper) {
   def fromPathString(path: String): File = {
@@ -154,14 +159,12 @@ final class ProtobufReaders(mapper: ReadMapper) {
     val mainClasses = sourceInfo.mainClasses
     val reportedProblems = sourceInfo.reportedProblems.map(fromProblem)
     val unreportedProblems = sourceInfo.unreportedProblems.map(fromProblem)
-    val usedNamePositions = sourceInfo.usedNamePositions.map(fromNamePosition)
-    val definedNamePositions = sourceInfo.definedNamePositions.map(fromNamePosition)
+    val symbolOccurrences = sourceInfo.symbolOccurrences.map(fromSymbolOccurrence)
     SourceInfos.makeInfo(
       reported = reportedProblems,
       unreported = unreportedProblems,
       mainClasses = mainClasses,
-      usedNamePositions = usedNamePositions,
-      definedNamePositions = definedNamePositions
+      symbolOccurrences = symbolOccurrences
     )
   }
 
@@ -646,11 +649,22 @@ final class ProtobufReaders(mapper: ReadMapper) {
     (analysis, miniSetup, version)
   }
 
-  def fromNamePosition(namePosition: schema.NamePosition): NamePosition = {
-    NamePosition.apply(namePosition.line,
-                       namePosition.column,
-                       namePosition.name,
-                       namePosition.fullName)
+  def fromRange(range: RangeProtobuf): Range =
+    Range.of(range.startLine, range.startCharacter, range.endLine, range.endCharacter)
+
+  def fromRole(role: SymbolOccurrenceProtobuf.Role): Role =
+    role match {
+      case SymbolOccurrenceProtobuf.Role.DEFINITION =>
+        Role.DEFINITION
+      case SymbolOccurrenceProtobuf.Role.REFERENCE =>
+        Role.REFERENCE
+      case _ => Role.UNKNOWN_ROLE
+    }
+
+  def fromSymbolOccurrence(symbolOccurrence: SymbolOccurrenceProtobuf): SymbolOccurrence = {
+    SymbolOccurrence.of(symbolOccurrence.range.map(fromRange).getOrElse(Range.of(0, 0, 0, 0)),
+                        symbolOccurrence.symbol,
+                        fromRole(symbolOccurrence.role))
   }
 
 }

@@ -12,6 +12,7 @@ import java.util.{ HashSet => JavaSet }
 import java.util.EnumSet
 
 import xsbti.UseScope
+import xsbti.semanticdb3.{ Role, SymbolOccurrence }
 // Left for compatibility
 import Compat._
 
@@ -61,12 +62,7 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
 
   private case class SimplePosition(line: Int, column: Int)
   private type NamePositionMap = JavaMap[SimplePosition, NameInfo]
-  sealed trait NameType
-  private object NameType {
-    case object Def extends NameType
-    case object Use extends NameType
-  }
-  private final case class NameInfo(name: Name, fullName: String, nameType: NameType)
+  private final case class NameInfo(name: Name, fullName: String, nameType: Role)
   private final class NamesUsedInClass {
     // Default names and other scopes are separated for performance reasons
     val defaultNames: JavaSet[Name] = new JavaSet[global.Name]()
@@ -103,10 +99,10 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
           builder.append(fullName)
           builder.append(")")
           nameType match {
-            case NameType.Def =>
+            case Role.DEFINITION =>
               builder.append(" defined,")
-            case NameType.Use =>
-              builder.append(" used,")
+            case Role.REFERENCE =>
+              builder.append(" referenced,")
             case _ =>
           }
           ()
@@ -198,14 +194,14 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
       }
       usedNames.defaultNamePositions.foreach {
         case (pos, NameInfo(rawUsedName, fullName, nameType)) =>
-          val useName = rawUsedName.decoded.trim
-          nameType match {
-            case NameType.Use =>
-              callback.usedNamePosition(className, pos.line, pos.column, useName, fullName)
-            case NameType.Def =>
-              callback.definedNamePosition(className, pos.line, pos.column, useName, fullName)
-            case _ =>
-          }
+          val line = pos.line - 1
+          val character = pos.column - 1
+          val nameLength = rawUsedName.decoded.length
+          val range =
+            xsbti.semanticdb3.Range.of(line, character, line, character + nameLength)
+          val symbolOccurrence =
+            SymbolOccurrence.of(range, fullName, nameType)
+          callback.occurredSymbol(className, symbolOccurrence)
       }
     }
   }
@@ -238,8 +234,8 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
       }
     }
 
-    val addSymbolPosition: (NamePositionMap, Symbol, Tree, NameType) => Unit = {
-      (namePositions: NamePositionMap, symbol: Symbol, tree: Tree, nameType: NameType) =>
+    val addSymbolPosition: (NamePositionMap, Symbol, Tree, Role) => Unit = {
+      (namePositions: NamePositionMap, symbol: Symbol, tree: Tree, nameType: Role) =>
         if (tree.pos != NoPosition) {
           val position = SimplePosition(tree.pos.line, tree.pos.column)
           if (!namePositions.containsKey(position) && !ignoredSymbol(symbol) && !isEmptyName(
@@ -320,10 +316,10 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
     private def handleClassicTreeNode(tree: Tree): Unit = tree match {
       // Register names from pattern match target type in PatMatTarget scope
       case ValDef(mods, _, tpt, _) if mods.isCase && mods.isSynthetic =>
-        addSymbolPosition(getNamePositionsOfEnclosingScope, tree.symbol, tree, NameType.Def)
+        addSymbolPosition(getNamePositionsOfEnclosingScope, tree.symbol, tree, Role.DEFINITION)
         PatMatDependencyTraverser.traverse(tpt.tpe)
       case _: ValOrDefDef | _: TypeDef | _: ClassDef | _: ModuleDef =>
-        addSymbolPosition(getNamePositionsOfEnclosingScope, tree.symbol, tree, NameType.Def)
+        addSymbolPosition(getNamePositionsOfEnclosingScope, tree.symbol, tree, Role.DEFINITION)
       case _: DefTree | _: Template => ()
       case Import(_, selectors: List[ImportSelector]) =>
         val names = getNamesOfEnclosingScope
@@ -352,7 +348,7 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         val symbol = t.symbol
         if (symbol != rootMirror.RootPackage) {
           addSymbol(getNamesOfEnclosingScope, t.symbol)
-          addSymbolPosition(getNamePositionsOfEnclosingScope, t.symbol, t, NameType.Use)
+          addSymbolPosition(getNamePositionsOfEnclosingScope, t.symbol, t, Role.REFERENCE)
         }
 
         val tpe = t.tpe
