@@ -42,17 +42,17 @@ class ExtractUsedNamesSpecification extends UnitSpec {
       compilerForTesting.extractUsedNamesFromSrc(srcA, srcB)
     val expectedNames = standardNames ++ Set("a", "c", "A", "B", "C", "D", "b", "X", "BB")
     assert(usedNames("b.X") === expectedNames)
-    val expectedUsedNamePositions = Set((1, 9, "b"),
-                                        (3, 15, "a"),
-                                        (3, 17, "a.A"),
-                                        (3, 19, "a.A.C"),
-                                        (3, 21, "a.A.C.D"),
-                                        (4, 15, "a"),
-                                        (4, 17, "a.B"),
-                                        (4, 19, "c"),
-                                        (4, 21, "c.BB"))
+    val expectedUsedNamePositions = Set((0, 8, "b"),
+                                        (2, 14, "a"),
+                                        (2, 16, "a.A"),
+                                        (2, 18, "a.A.C"),
+                                        (2, 20, "a.A.C.D"),
+                                        (3, 14, "a"),
+                                        (3, 16, "a.B"),
+                                        (3, 18, "c"),
+                                        (3, 20, "c.BB"))
     assert(expectedUsedNamePositions.forall(usedNamePositions("b.X").contains))
-    val expectedDefinedNamePositions = Set((2, 17, "b.X"), (3, 10, "b.X.foo"), (4, 10, "b.X.bar"))
+    val expectedDefinedNamePositions = Set((1, 16, "b.X"), (2, 9, "b.X.foo"), (3, 9, "b.X.bar"))
     assert(expectedDefinedNamePositions.forall(definedNamePositions("b.X").contains))
   }
 
@@ -70,10 +70,10 @@ class ExtractUsedNamesSpecification extends UnitSpec {
     val expectedNames = standardNames ++ Set("A", "a", "B", "=", "Int")
     assert(usedNames("B") === expectedNames)
     val expectedUsedNamePositions =
-      Set((2, 14, "A"), (2, 19, "B.a"), (2, 21, "A.$eq"))
+      Set((1, 13, "A"), (1, 18, "B.a"), (1, 20, "A.$eq"))
     assert(expectedUsedNamePositions.forall(usedNamePositions("B").contains))
     val expectedDefinedNamePositions =
-      Set((1, 7, "B"), (2, 7, "B.foo"), (2, 11, "B.a"))
+      Set((0, 6, "B"), (1, 6, "B.foo"), (1, 10, "B.a"))
     assert(expectedDefinedNamePositions.forall(definedNamePositions("B").contains))
   }
 
@@ -109,21 +109,21 @@ class ExtractUsedNamesSpecification extends UnitSpec {
     assert(usedNames("D") === namesD)
 
     val expectedUsedNamePositionsAX =
-      Set((4, 16, "A.T"), (4, 20, "A.T"), (4, 24, "A.X.x"))
-    val expectedUsedNamePositionsB = Set((1, 17, "A"), (1, 30, "scala.Int"))
-    val expectedUsedNamePositionsC = Set((1, 18, "B"))
+      Set((3, 15, "A.T"), (3, 19, "A.T"), (3, 23, "A.X.x"))
+    val expectedUsedNamePositionsB = Set((0, 16, "A"), (0, 29, "scala.Int"))
+    val expectedUsedNamePositionsC = Set((0, 17, "B"))
     val expectedUsedNamePositionsD =
-      Set((1, 12, "C"), (1, 14, "A.X"), (1, 16, "A.X.foo"))
+      Set((0, 11, "C"), (0, 13, "A.X"), (0, 15, "A.X.foo"))
     assert(expectedUsedNamePositionsAX.forall(usedNamePositions("A.X").contains))
     assert(expectedUsedNamePositionsB.forall(usedNamePositions("B").contains))
     assert(expectedUsedNamePositionsC.forall(usedNamePositions("C").contains))
     assert(expectedUsedNamePositionsD.forall(usedNamePositions("D").contains))
 
-    val expectedDefinedNamePositionsA = Set((1, 16, "A"), (2, 7, "A.T"), (3, 9, "A.X"))
-    val expectedDefinedNamePositionsAX = Set((4, 9, "A.X.foo"), (4, 13, "A.X.x"))
-    val expectedDefinedNamePositionsB = Set((1, 7, "B"), (1, 26, "B.T"))
-    val expectedDefinedNamePositionsC = Set((1, 8, "C"))
-    val expectedDefinedNamePositionsD = Set((1, 8, "D"))
+    val expectedDefinedNamePositionsA = Set((0, 15, "A"), (1, 6, "A.T"), (2, 8, "A.X"))
+    val expectedDefinedNamePositionsAX = Set((3, 8, "A.X.foo"), (3, 12, "A.X.x"))
+    val expectedDefinedNamePositionsB = Set((0, 6, "B"), (0, 25, "B.T"))
+    val expectedDefinedNamePositionsC = Set((0, 7, "C"))
+    val expectedDefinedNamePositionsD = Set((0, 7, "D"))
     assert(expectedDefinedNamePositionsA.forall(definedNamePositions("A").contains))
     assert(expectedDefinedNamePositionsAX.forall(definedNamePositions("A.X").contains))
     assert(expectedDefinedNamePositionsB.forall(definedNamePositions("B").contains))
@@ -201,41 +201,41 @@ class ExtractUsedNamesSpecification extends UnitSpec {
     assert(usedNames("Test_bar") === expectedNames_bar)
 
     val expectedUsedNamePositions_lista =
-      Set((2, 11, "B"), (2, 13, "B.lista"))
+      Set((1, 10, "B"), (1, 12, "B.lista"))
     val expectedUsedNamePositions_at =
-      Set((5, 11, "B"), (5, 13, "B.at"))
+      Set((4, 10, "B"), (4, 12, "B.at"))
     val expectedUsedNamePositions_as =
-      Set((8, 11, "B"), (8, 13, "B.as"))
+      Set((7, 10, "B"), (7, 12, "B.as"))
     val expectedUsedNamePositions_foo =
-      Set((11, 11, "B"), (11, 13, "B.foo"), (11, 17, "scala.Predef.$qmark$qmark$qmark"))
+      Set((10, 10, "B"), (10, 12, "B.foo"), (10, 16, "scala.Predef.$qmark$qmark$qmark"))
     val expectedUsedNamePositions_bar =
-      Set((14, 11, "B"), (14, 13, "B.bar"), (14, 17, "scala.Predef.$qmark$qmark$qmark"))
+      Set((13, 10, "B"), (13, 12, "B.bar"), (13, 16, "scala.Predef.$qmark$qmark$qmark"))
     assert(expectedUsedNamePositions_lista.forall(usedNamePositions("Test_lista").contains))
     assert(expectedUsedNamePositions_at.forall(usedNamePositions("Test_at").contains))
     assert(expectedUsedNamePositions_as.forall(usedNamePositions("Test_as").contains))
     assert(expectedUsedNamePositions_foo.forall(usedNamePositions("Test_foo").contains))
     assert(expectedUsedNamePositions_bar.forall(usedNamePositions("Test_bar").contains))
 
-    val expectedDefinedNamePositions_lista = Set((1, 8, "Test_lista"),
-                                                 (2, 7, "Test_lista.x"),
-                                                 (4, 8, "Test_at"),
-                                                 (7, 8, "Test_as"),
-                                                 (10, 8, "Test_foo"),
-                                                 (13, 8, "Test_bar"))
-    val expectedDefinedNamePositions_at = Set((5, 7, "Test_at.x"))
-    val expectedDefinedNamePositions_as = Set((8, 7, "Test_as.x"))
-    val expectedDefinedNamePositions_foo = Set((11, 7, "Test_foo.x"))
-    val expectedDefinedNamePositions_bar = Set((14, 7, "Test_bar.x"))
+    val expectedDefinedNamePositions_lista = Set((0, 7, "Test_lista"),
+                                                 (1, 6, "Test_lista.x"),
+                                                 (3, 7, "Test_at"),
+                                                 (6, 7, "Test_as"),
+                                                 (9, 7, "Test_foo"),
+                                                 (12, 7, "Test_bar"))
+    val expectedDefinedNamePositions_at = Set((4, 6, "Test_at.x"))
+    val expectedDefinedNamePositions_as = Set((7, 6, "Test_as.x"))
+    val expectedDefinedNamePositions_foo = Set((10, 6, "Test_foo.x"))
+    val expectedDefinedNamePositions_bar = Set((13, 6, "Test_bar.x"))
     val expectedDefinedNamePositions_B = Set(
-      (12, 8, "B.S"),
-      (13, 7, "B.lista"),
-      (14, 7, "B.at"),
-      (15, 7, "B.as"),
-      (16, 7, "B.foo"),
-      (16, 11, "B.m"),
-      (17, 7, "B.bar"),
-      (17, 11, "B.Param"),
-      (17, 30, "B.p")
+      (11, 7, "B.S"),
+      (12, 6, "B.lista"),
+      (13, 6, "B.at"),
+      (14, 6, "B.as"),
+      (15, 6, "B.foo"),
+      (15, 10, "B.m"),
+      (16, 6, "B.bar"),
+      (16, 10, "B.Param"),
+      (16, 29, "B.p")
     )
     assert(expectedDefinedNamePositions_lista.forall(definedNamePositions("Test_lista").contains))
     assert(expectedDefinedNamePositions_at.forall(definedNamePositions("Test_at").contains))
@@ -269,14 +269,14 @@ class ExtractUsedNamesSpecification extends UnitSpec {
     assert(usedNames("Foo") === expectedNames)
 
     val expectedUsedNamePositions =
-      Set((1, 8, "scala"),
-          (1, 14, "scala.language"),
-          (3, 12, "Foo.T"),
-          (3, 45, "scala.Predef.$qmark$qmark$qmark"))
+      Set((0, 7, "scala"),
+          (0, 13, "scala.language"),
+          (2, 11, "Foo.T"),
+          (2, 44, "scala.Predef.$qmark$qmark$qmark"))
     assert(expectedUsedNamePositions.forall(usedNamePositions("Foo").contains))
 
     val expectedDefinedNamePositions =
-      Set((2, 7, "Foo"), (3, 7, "Foo.foo"), (3, 29, "Foo.T"))
+      Set((1, 6, "Foo"), (2, 6, "Foo.foo"), (2, 28, "Foo.T"))
     assert(expectedDefinedNamePositions.forall(definedNamePositions("Foo").contains))
   }
 
@@ -291,10 +291,10 @@ class ExtractUsedNamesSpecification extends UnitSpec {
     assert(usedNames("Bar") === expectedNames)
 
     val expectedUsedNamePositions =
-      Set((2, 12, "Outer"), (2, 18, "Outer.TypeInner"))
+      Set((1, 11, "Outer"), (1, 17, "Outer.TypeInner"))
     assert(expectedUsedNamePositions.forall(usedNamePositions("Bar").contains))
 
-    val expectedDefinedNamePositions = Set((1, 8, "Bar"), (2, 7, "Bar.bar"))
+    val expectedDefinedNamePositions = Set((0, 7, "Bar"), (1, 6, "Bar.bar"))
     assert(expectedDefinedNamePositions.forall(definedNamePositions("Bar").contains))
   }
 
@@ -307,10 +307,10 @@ class ExtractUsedNamesSpecification extends UnitSpec {
     val expectedNames = standardNames ++ Set("A", "foo", "Int")
     assert(usedNames("A") === expectedNames)
     val expectedUsedNamePositions =
-      Set((1, 20, "scala.Int"), (1, 38, "scala.Int"), (1, 44, "A.foo"))
+      Set((0, 19, "scala.Int"), (0, 37, "scala.Int"), (0, 43, "A.foo"))
     assert(expectedUsedNamePositions.forall(usedNamePositions("A").contains))
     val expectedDefinedNamePositions =
-      Set((1, 7, "A"), (1, 15, "A.foo"), (1, 33, "A.bar"))
+      Set((0, 6, "A"), (0, 14, "A.foo"), (0, 32, "A.bar"))
     assert(expectedDefinedNamePositions.forall(definedNamePositions("A").contains))
   }
 

@@ -8,6 +8,7 @@
 package xsbti.compile.analysis;
 
 import xsbti.Problem;
+import xsbti.semanticdb3.SymbolOccurrence;
 
 import java.util.Optional;
 import java.util.Set;
@@ -43,18 +44,12 @@ public interface SourceInfo {
 
 
     /**
-     * Returns the used names found in this compilation unit.
+     * Returns the occurred symbols found in this compilation unit.
      *
-     * @return used names and its positions
+     * @return occurred symbols
      */
-    public NamePosition[] getUsedNamePositions();
+    public SymbolOccurrence[] getSymbolOccurrences();
 
-    /**
-     * Returns the defined names found in this compilation unit.
-     *
-     * @return defined names and its positions
-     */
-    public NamePosition[] getDefinedNamePositions();
 
     /**
      * Return the full name of the symbol at the specified position.
@@ -71,7 +66,7 @@ public interface SourceInfo {
      * @param fullName The full name of a symbol.
      * @return The position in source.
      */
-    public Set<NamePosition> getPositionByFullName(String fullName);
+    public Set<SymbolOccurrence> getPositionByFullName(String fullName);
 
 }
 
