@@ -10,17 +10,17 @@ package sbt.internal.inc.binary.converters
 import java.io.File
 
 import sbt.internal.inc._
-import xsbti._
-import xsbti.compile.analysis.{ SourceInfo, Stamp, WriteMapper }
-import xsbti.semanticdb3.{ Range, Role, SymbolOccurrence }
 import sbt.internal.inc.binary.converters.ProtobufDefaults.Feedback.{ Writers => WritersFeedback }
 import sbt.internal.inc.binary.converters.ProtobufDefaults.WritersConstants
-import xsbti.api.{ Private, _ }
-import xsbti.compile._
-import `scala`.meta.internal.semanticdb3.semanticdb3.{
+import sbt.internal.inc.semanticdb3.{
   Range => RangeProtobuf,
   SymbolOccurrence => SymbolOccurrenceProtobuf
 }
+import xsbti._
+import xsbti.api.{ Private, _ }
+import xsbti.compile._
+import xsbti.compile.analysis.{ SourceInfo, Stamp, WriteMapper }
+import xsbti.semanticdb3.{ Range, Role, SymbolOccurrence }
 
 final class ProtobufWriters(mapper: WriteMapper) {
   def toStringPath(file: File): String = {
@@ -116,7 +116,7 @@ final class ProtobufWriters(mapper: WriteMapper) {
     schema.Compilations(compilations = compilations)
   }
 
-  import ProtobufDefaults.{ MissingString, MissingInt }
+  import ProtobufDefaults.{ MissingInt, MissingString }
   import sbt.internal.inc.JavaInterfaceUtil._
   def toPosition(position: Position): schema.Position = {
     schema.Position(

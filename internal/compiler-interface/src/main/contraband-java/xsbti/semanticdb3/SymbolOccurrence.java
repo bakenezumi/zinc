@@ -7,7 +7,7 @@ package xsbti.semanticdb3;
 /**
  * "Occurrences" is a section of a TextDocument that represents the results of name resolution for identifiers in the underlying code snippet.
  * <code>SymbolOccurrence</code> refers to a <code>Range</code> in the TextDocument and has a symbol as explained in <code>Symbol</code>.
- * </code>role</code> is an enumeration that describes the semantic role that the identifier performs in the code.
+ * <code>role</code> is an enumeration that describes the semantic role that the identifier performs in the code.
  * @see <a href='https://github.com/scalameta/scalameta/blob/master/semanticdb/semanticdb3/semanticdb3.md#symboloccurrence'>scalameta/semanticdb3#SymbolOccurrence</a>
  */
 public final class SymbolOccurrence implements java.io.Serializable {
