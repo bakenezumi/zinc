@@ -72,19 +72,23 @@ class IncrementalCompilerSpec extends BaseCompilerSpec {
       val symbolOccurrences_Foo = sourceInfo_Foo.getSymbolOccurrences.toSet
 
       assert(
-        Set(
-          SymbolOccurrence.of(Range.of(0, 8, 0, 11), "pkg", Role.REFERENCE),
-          SymbolOccurrence.of(Range.of(2, 7, 2, 11), "pkg.Good", Role.DEFINITION),
-          SymbolOccurrence.of(Range.of(2, 20, 2, 23), "scala.App", Role.REFERENCE),
-          SymbolOccurrence.of(Range.of(4, 2, 4, 9), "scala.Predef.println", Role.REFERENCE)
-        ).forall(symbolOccurrences_Good.contains)
-      )
+        symbolOccurrences_Good.filterNot(_.symbol == "scala.AnyRef#") ===
+          Set(
+            SymbolOccurrence.of(Range.of(2, 7, 2, 11), "pkg.Good.", Role.DEFINITION),
+            SymbolOccurrence.of(Range.of(2, 20, 2, 23), "scala.App#", Role.REFERENCE),
+            SymbolOccurrence.of(Range.of(4, 2, 4, 9), "scala.Predef#println(Any).", Role.REFERENCE),
+            // TODO: Range of the primary constructor needs adjustment.
+            SymbolOccurrence.of(Range.of(2, 20, 2, 34), "pkg.Good#`<init>`().", Role.DEFINITION)
+          ))
       assert(
-        Set(
-          SymbolOccurrence.of(Range.of(0, 8, 0, 11), "pkg", Role.REFERENCE),
-          SymbolOccurrence.of(Range.of(2, 7, 2, 10), "pkg.Foo", Role.DEFINITION),
-          SymbolOccurrence.of(Range.of(3, 6, 3, 8), "pkg.Foo.x", Role.DEFINITION)
-        ).forall(symbolOccurrences_Foo.contains)
+        symbolOccurrences_Foo.filterNot(_.symbol == "scala.AnyRef#") ===
+          Set(
+            SymbolOccurrence.of(Range.of(2, 7, 2, 10), "pkg.Foo.", Role.DEFINITION),
+            SymbolOccurrence.of(Range.of(3, 6, 3, 8), "pkg.Foo#x.", Role.DEFINITION),
+            SymbolOccurrence.of(Range.of(3, 6, 3, 7), "pkg.Foo#x().", Role.DEFINITION),
+            // TODO: Range of the primary constructor needs adjustment.
+            SymbolOccurrence.of(Range.of(4, 2, 4, 15), "pkg.Foo#`<init>`().", Role.DEFINITION)
+          )
       )
     }
   }

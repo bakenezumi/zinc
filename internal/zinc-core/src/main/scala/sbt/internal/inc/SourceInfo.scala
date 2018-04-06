@@ -61,17 +61,17 @@ private final class UnderlyingSourceInfo(val reportedProblems: Seq[Problem],
   override def getUnreportedProblems: Array[Problem] = unreportedProblems.toArray
   override def getMainClasses: Array[String] = mainClasses.toArray
   override def getSymbolOccurrences: Array[SymbolOccurrence] = symbolOccurrences.toArray
-  override def getFullNameByPosition(line: Int, column: Int): Optional[String] =
+  override def getSymbolNameByPosition(line: Int, character: Int): Optional[String] =
     symbolOccurrences.find { symbolOccurrence =>
       val range = symbolOccurrence.range
       range.startLine() == line &&
-      range.startCharacter() <= column &&
-      column <= range.endCharacter()
+      range.startCharacter() <= character &&
+      character <= range.endCharacter()
     } match {
       case None     => Optional.empty[String]
       case Some(so) => Optional.of(so.symbol)
     }
-  override def getPositionByFullName(fullName: String): java.util.Set[SymbolOccurrence] = {
+  override def getSymbolDefinition(fullName: String): java.util.Set[SymbolOccurrence] = {
     val javaSet = new java.util.HashSet[SymbolOccurrence]()
     symbolOccurrences
       .filter(

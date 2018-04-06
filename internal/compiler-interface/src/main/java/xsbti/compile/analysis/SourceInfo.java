@@ -52,21 +52,22 @@ public interface SourceInfo {
 
 
     /**
-     * Return the full name of the symbol at the specified position.
+     * Return the name of the symbol at the specified position.
+     *
      *
      * @param line The line position in source.
-     * @param column The column position in source.
+     * @param character The character position in source.
      * @return The full name of a symbol.
      */
-    public Optional<String> getFullNameByPosition(int line, int column);
+    public Optional<String> getSymbolNameByPosition(int line, int character);
 
     /**
-     * Return the position where the symbol is defined.
+     * Return the <code>SymbolOccurrence<code/> where the symbol is defined.
      *
-     * @param fullName The full name of a symbol.
+     * @param symbolName The name of a symbol.
      * @return The position in source.
      */
-    public Set<SymbolOccurrence> getPositionByFullName(String fullName);
+    public Set<SymbolOccurrence> getSymbolDefinition(String symbolName);
 
 }
 

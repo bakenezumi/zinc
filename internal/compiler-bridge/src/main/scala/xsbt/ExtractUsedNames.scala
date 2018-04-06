@@ -7,6 +7,7 @@
 
 package xsbt
 
+import java.util.ArrayList
 import java.util.{ HashMap => JavaMap }
 import java.util.{ HashSet => JavaSet }
 import java.util.EnumSet
@@ -60,9 +61,11 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
   import global._
   import JavaUtils._
 
-  private case class SimplePosition(line: Int, column: Int)
-  private type NamePositionMap = JavaMap[SimplePosition, NameInfo]
-  private final case class NameInfo(name: Name, fullName: String, nameType: Role)
+  private type NamePositionMap = JavaMap[Position, ArrayList[NameInfo]]
+  private case class NameInfo(name: Name, semanticName: String, role: Role)
+  private[this] val semanticOps = new NoMetaSemanticdbOps[GlobalType](global)
+  import semanticOps._
+
   private final class NamesUsedInClass {
     // Default names and other scopes are separated for performance reasons
     val defaultNames: JavaSet[Name] = new JavaSet[global.Name]()
@@ -87,25 +90,27 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         ()
       }
       builder.append("\nused positions:")
-      defaultNamePositions.foreach {
-        case (pos, NameInfo(name, fullName, nameType)) =>
-          builder.append("\n (line: ")
-          builder.append(pos.line)
-          builder.append(", column: ")
-          builder.append(pos.column)
-          builder.append(") -> ")
-          builder.append(name.decode.trim)
-          builder.append("(")
-          builder.append(fullName)
-          builder.append(")")
-          nameType match {
-            case Role.DEFINITION =>
-              builder.append(" defined,")
-            case Role.REFERENCE =>
-              builder.append(" referenced,")
-            case _ =>
-          }
-          ()
+      defaultNamePositions.foreach { (pos, names) =>
+        names.foreach {
+          case NameInfo(name, fullName, nameType) =>
+            builder.append("\n (line: ")
+            builder.append(pos.line)
+            builder.append(", column: ")
+            builder.append(pos.column)
+            builder.append(") -> ")
+            builder.append(name.decode.trim)
+            builder.append("(")
+            builder.append(fullName)
+            builder.append(")")
+            nameType match {
+              case Role.DEFINITION =>
+                builder.append(" defined,")
+              case Role.REFERENCE =>
+                builder.append(" referenced,")
+              case _ =>
+            }
+            ()
+        }
       }
       builder.toString()
     }
@@ -192,17 +197,18 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
         }
         callback.usedName(className, useName, useScopes)
       }
-      usedNames.defaultNamePositions.foreach {
-        case (pos, NameInfo(rawUsedName, fullName, nameType)) =>
-          val line = pos.line - 1
-          val character = pos.column - 1
-          val nameLength = rawUsedName.decoded.length
-          val range =
-            xsbti.semanticdb3.Range.of(line, character, line, character + nameLength)
-          val symbolOccurrence =
-            SymbolOccurrence.of(range, fullName, nameType)
-          callback.occurredSymbol(className, symbolOccurrence)
-      }
+      usedNames.defaultNamePositions.foreach((pos, names) =>
+        names.foreach {
+          case NameInfo(rawUsedName, fullName, nameType) =>
+            val line = pos.line - 1
+            val character = pos.column - 1
+            val nameLength = rawUsedName.decoded.length
+            val range =
+              xsbti.semanticdb3.Range.of(line, character, line, character + nameLength)
+            val symbolOccurrence =
+              SymbolOccurrence.of(range, fullName, nameType)
+            callback.occurredSymbol(className, symbolOccurrence)
+      })
     }
   }
 
@@ -235,12 +241,24 @@ class ExtractUsedNames[GlobalType <: CallbackGlobal](val global: GlobalType)
     }
 
     val addSymbolPosition: (NamePositionMap, Symbol, Tree, Role) => Unit = {
-      (namePositions: NamePositionMap, symbol: Symbol, tree: Tree, nameType: Role) =>
+      (namePositions: NamePositionMap, symbol: Symbol, tree: Tree, role: Role) =>
         if (tree.pos != NoPosition) {
-          val position = SimplePosition(tree.pos.line, tree.pos.column)
-          if (!namePositions.containsKey(position) && !ignoredSymbol(symbol) && !isEmptyName(
-                symbol.name)) {
-            namePositions.put(position, NameInfo(mangledName(symbol), symbol.fullName, nameType))
+          // If more than one reference is included in one position, only the first one is registered.
+          val registeredReference = namePositions.containsKey(tree.pos) && role == Role.REFERENCE
+          val ignoreReference = {
+            val tpe = symbol.tpe
+            role == Role.REFERENCE && (definitions.isByNameParamType(tpe) || definitions
+              .isRepeatedParamType(tpe))
+          }
+          if (!registeredReference && !ignoreReference && !symbol.hasPackageFlag && !ignoredSymbol(
+                symbol) && !isEmptyName(symbol.name)) {
+            val semanticName = symbol.toSemanticName
+            // Local names are not collected.
+            if (!semanticName.isEmpty) {
+              val names = namePositions.getOrDefault(tree.pos, new ArrayList[NameInfo]())
+              names.add(NameInfo(mangledName(symbol), semanticName, role))
+              namePositions.put(tree.pos, names)
+            }
             ()
           }
         }
