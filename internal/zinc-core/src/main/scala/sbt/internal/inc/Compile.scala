@@ -290,7 +290,7 @@ private final class AnalysisCallback(
     add(usedNames, className, UsedName(name, useScopes))
 
   def occurredSymbol(className: String, symbolOccurrence: semanticdb3.SymbolOccurrence): Unit =
-    if (options.storeApis()) // TODO: use other option
+    if (options.storeSymbolIndex())
       add(symbolOccurrences, className, symbolOccurrence)
 
   override def enabled(): Boolean = options.enabled
