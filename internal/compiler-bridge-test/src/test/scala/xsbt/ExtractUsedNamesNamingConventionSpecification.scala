@@ -68,10 +68,12 @@ class ExtractUsedNamesNamingConventionSpecification extends UnitSpec {
       (3, 10, "_empty_.C#xvar."),
       (3, 10, "_empty_.C#xvar()."),
       (3, 10, "_empty_.C#xvar_$eq(Nothing)."), // TODO: _empty_.C#xvar_=(Nothing).
-      (3, 10, "_empty_.C#xvar_$eq(Nothing).(x$1)"),
       (4, 1, "_empty_.C#`<init>`().")
     )
-    assert(definedSymbols("C") === expectedDefinedSymbols)
+    // `_empty_.C#xvar_$eq(Nothing).(x$1)` occurred after scala 2.12
+    assert(
+      definedSymbols("C")
+        .filterNot(_._3 == "_empty_.C#xvar_$eq(Nothing).(x$1)") === expectedDefinedSymbols)
 
   }
 
